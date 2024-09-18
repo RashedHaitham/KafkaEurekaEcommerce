@@ -1,4 +1,4 @@
-package com.example.PaymentService.entity;
+package org.example;
 
 public class PaymentRequest {
 

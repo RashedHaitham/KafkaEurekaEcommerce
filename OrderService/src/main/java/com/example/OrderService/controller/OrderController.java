@@ -2,31 +2,26 @@ package com.example.OrderService.controller;
 
 import com.example.OrderService.entity.Inventory;
 import com.example.OrderService.entity.Notification;
-import com.example.OrderService.entity.PaymentRequest;
-import com.example.OrderService.kafka.OrderProducer;
 import com.example.OrderService.service.InventoryService;
 import com.example.OrderService.service.NotificationService;
 import com.example.OrderService.service.PaymentService;
+import org.example.PaymentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrderProducer orderProducer;
     private InventoryService inventoryService;
     private NotificationService notificationService;
     private PaymentService paymentService;
 
     @Autowired
-    public OrderController(OrderProducer orderProducer, InventoryService inventoryService,
+    public OrderController( InventoryService inventoryService,
                            NotificationService notificationService, PaymentService paymentService) {
-        this.orderProducer = orderProducer;
         this.inventoryService = inventoryService;
         this.notificationService = notificationService;
         this.paymentService = paymentService;
@@ -59,7 +54,6 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found in inventory");
             }
         } catch (Exception e) {
-            // Log the error for debugging purposes
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing the order");
         }

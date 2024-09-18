@@ -1,10 +1,10 @@
 package com.example.PaymentService.config;
 
-import com.example.PaymentService.entity.PaymentRequest;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.example.PaymentRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -39,10 +39,9 @@ public class KafkaConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "paymentService");
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-        // Configure the JsonDeserializer to handle the PaymentRequest class
         JsonDeserializer<PaymentRequest> deserializer = new JsonDeserializer<>(PaymentRequest.class);
-        deserializer.addTrustedPackages("com.example.PaymentService.entity"); // Make sure package is correct
-        deserializer.setRemoveTypeHeaders(false); // Keep headers for proper deserialization
+        deserializer.addTrustedPackages("*");
+        deserializer.setRemoveTypeHeaders(false);
 
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
     }

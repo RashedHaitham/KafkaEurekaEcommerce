@@ -1,6 +1,6 @@
 package com.example.OrderService.service;
 
-import com.example.OrderService.entity.PaymentRequest;
+import org.example.PaymentRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
