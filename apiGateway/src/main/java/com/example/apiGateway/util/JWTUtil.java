@@ -44,16 +44,23 @@ public class JWTUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String fullname, String email) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("fullname", fullname);  // Add full name claim
+        claims.put("email", email);  // Add email claim
         return createToken(claims, username);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(key).compact();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)  // Set the subject (usually username or user ID)
+                .setIssuedAt(new Date(System.currentTimeMillis()))  // Set issued time
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // Set expiration (10 hours)
+                .signWith(key)  // Use your secret key to sign the token
+                .compact();
     }
+
 
     public Boolean validateToken(String token, String username) {
         final String extractedUsername = extractUsername(token);

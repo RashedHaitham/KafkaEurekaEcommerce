@@ -1,19 +1,34 @@
 package com.example.apiGateway.model;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.ldap.odm.annotations.Entry;
+import org.springframework.ldap.odm.annotations.Id;
+import org.springframework.ldap.odm.annotations.Attribute;
 
-@Document(collection = "users")
+import javax.naming.Name;
+@Entry(base = "ou=users", objectClasses = { "inetOrgPerson", "top" })
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class User {
 
     @Id
-    private String id;
+    @JsonIgnore
+    private Name id;
+
+    @Attribute(name = "uid")
     private String username;
+
+    @Attribute(name = "cn")
+    private String fullName;
+
+    @Attribute(name = "sn")
+    private String lastName;
+
+    @Attribute(name = "mail")
+    private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Attribute(name = "userPassword")
     private String password;
 }

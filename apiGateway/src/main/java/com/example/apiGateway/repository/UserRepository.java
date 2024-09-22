@@ -1,9 +1,10 @@
 package com.example.apiGateway.repository;
 
 import com.example.apiGateway.model.User;
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
-import reactor.core.publisher.Mono;
+import org.springframework.data.ldap.repository.LdapRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserRepository extends ReactiveMongoRepository<User, String> {
-    Mono<User> findByUsername(String username);
+@Repository
+public interface UserRepository extends LdapRepository<User> {
+    User findByFullName(String fullName);
 }

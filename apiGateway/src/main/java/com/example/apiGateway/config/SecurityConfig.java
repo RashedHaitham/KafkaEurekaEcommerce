@@ -1,13 +1,18 @@
 package com.example.apiGateway.config;
 
 import com.example.apiGateway.service.JWTAuthenticationManager;
+import com.example.apiGateway.service.JWTFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.ldap.LdapBindAuthenticationManagerFactory;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.core.support.BaseLdapPathContextSource;
+import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
@@ -17,34 +22,62 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private final JWTAuthenticationManager authenticationManager;
+//    private final JWTAuthenticationManager authenticationManager;
+//
+//    public SecurityConfig(@Lazy JWTAuthenticationManager authenticationManager) {
+//        this.authenticationManager = authenticationManager;
+//    }
 
-    public SecurityConfig(JWTAuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
+    private final JWTFilter jwtFilter;
+
+    public SecurityConfig(JWTFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
     }
+
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/login", "/signup").permitAll() // Expose login and signup endpoints
+                        .pathMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll() // Expose login and signup endpoints
                         .anyExchange().authenticated()  // Protect all other endpoints
                 )
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .authenticationManager(authenticationManager)
-                .addFilterAt(jwtAuthenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
+                //.authenticationManager(authenticationManager)
+                .addFilterBefore(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
+
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public LdapContextSource contextSource() {
+        LdapContextSource contextSource = new LdapContextSource();
+        contextSource.setUrl("ldap://localhost:10389");  // LDAP server URL
+        contextSource.setBase("dc=example,dc=com");  // Base DN
+        contextSource.setUserDn("uid=admin,ou=system");  // LDAP admin user
+        contextSource.setPassword("secret");  // LDAP admin password
+        return contextSource;
     }
 
-    public AuthenticationWebFilter jwtAuthenticationWebFilter() {
-        AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(authenticationManager);
-        authenticationWebFilter.setServerAuthenticationConverter(authenticationManager.authenticationConverter());
-        return authenticationWebFilter;
+    @Bean
+    public LdapTemplate ldapTemplate() {
+        return new LdapTemplate(contextSource());
     }
+
+
+    @Bean
+    public AuthenticationManager authenticationManager(BaseLdapPathContextSource contextSource) {
+        LdapBindAuthenticationManagerFactory factory = new LdapBindAuthenticationManagerFactory(contextSource);
+        factory.setUserDnPatterns("uid={0},ou=users");
+        return factory.createAuthenticationManager();
+    }
+
+
+//    @Bean
+//    public AuthenticationWebFilter jwtAuthenticationWebFilter() {
+//        AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(authenticationManager);
+//        authenticationWebFilter.setServerAuthenticationConverter(authenticationManager.authenticationConverter());
+//        return authenticationWebFilter;
+//    }
 }
