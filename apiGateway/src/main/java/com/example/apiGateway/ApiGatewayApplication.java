@@ -23,12 +23,6 @@ public class ApiGatewayApplication {
 				.route("inventory-service", r -> r.path("/api/inventory/**")
 						.uri("lb://InventoryService"))
 
-				.route("payment-service", r -> r.path("/api/payments/**")
-						.uri("lb://PaymentService"))
-
-				.route("notification-service", r -> r.path("/api/notifications/**")
-						.uri("lb://NotificationService"))
-
 				.build();
 	}
 }

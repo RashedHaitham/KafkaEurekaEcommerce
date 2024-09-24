@@ -15,15 +15,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private InventoryService inventoryService;
-    private NotificationService notificationService;
-    private PaymentService paymentService;
+    private final InventoryService inventoryService;
+    private final PaymentService paymentService;
 
     @Autowired
-    public OrderController( InventoryService inventoryService,
-                           NotificationService notificationService, PaymentService paymentService) {
+    public OrderController(InventoryService inventoryService,
+                           PaymentService paymentService) {
         this.inventoryService = inventoryService;
-        this.notificationService = notificationService;
         this.paymentService = paymentService;
     }
 
@@ -31,12 +29,15 @@ public class OrderController {
     public ResponseEntity<String> test() {
         return ResponseEntity.ok("Hello World");
     }
+
     @PostMapping("/placeOrder/{id}")
-    public ResponseEntity<String> checkProduct(@PathVariable String id) {
+    public ResponseEntity<String> placeOrder(@PathVariable String id) {
         try {
+
             ResponseEntity<Inventory> inventoryResponse = inventoryService.checkProduct(id);
 
-            if (inventoryResponse.getStatusCode() == HttpStatus.OK) {
+            if (inventoryResponse.getStatusCode() == HttpStatus.OK && inventoryResponse.getBody() != null) {
+
                 PaymentRequest paymentRequest = new PaymentRequest();
                 paymentRequest.setOrderId(id);
                 paymentRequest.setAmount(10);
@@ -45,10 +46,9 @@ public class OrderController {
                 ResponseEntity<String> paymentResponse = paymentService.processPayment(paymentRequest);
 
                 if (paymentResponse.getStatusCode() == HttpStatus.OK) {
-                    Notification notification = new Notification("Rashed", "Payment successful");
-                    return notificationService.sendNotification(notification);
+                    return ResponseEntity.ok("Order placed successfully");
                 } else {
-                    return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body("Payment failed");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment failed");
                 }
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found in inventory");
@@ -58,5 +58,4 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing the order");
         }
     }
-
 }
