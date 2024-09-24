@@ -15,9 +15,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Collection;
+
 @RestController
 @RequestMapping("/api") // Versioning the API
 public class AuthController {
@@ -43,7 +48,8 @@ public class AuthController {
                 .flatMap(authentication -> {
                     return userService.findByUsername(authRequest.getUsername())
                             .flatMap(user -> {
-                                String accessToken = jwtUtil.generateToken(user.getUsername(), user.getFullName(), user.getEmail());
+                                Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();  // Extract authorities
+                                String accessToken = jwtUtil.generateToken(user,authorities);
 
                                 // Set JWT as a cookie
                                 ResponseCookie jwtCookie = ResponseCookie.from("jwtToken", accessToken)
@@ -79,11 +85,18 @@ public class AuthController {
 
         return userService.findByUsername(username)
                 .flatMap(user -> {
-                    String newAccessToken = jwtUtil.generateToken(user.getUsername(), user.getFullName(), user.getEmail());
+                    // Get the current authentication object from the security context
+                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+                    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+                    String newAccessToken = jwtUtil.generateToken(user, authorities);
+
                     return Mono.just(ResponseEntity.ok(new AuthResponse(newAccessToken)));
                 })
                 .onErrorResume(ex -> Mono.just(ResponseEntity.badRequest().body(new AuthResponse("Invalid refresh token"))));
     }
+
 
     // GET /api/users - Get all users
     @GetMapping("/users")

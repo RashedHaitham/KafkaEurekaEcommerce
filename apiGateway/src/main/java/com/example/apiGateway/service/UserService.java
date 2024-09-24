@@ -57,9 +57,12 @@ public class UserService {
 
 
     public Mono<User> savePerson(User user) {
+        user.setRole(user.getRole().toUpperCase());
+        String userOu = user.getRole().equals("ADMIN") ? "admins" : "users";  // Check the role
+
         return Mono.fromCallable(() -> {
             Name dn = LdapNameBuilder.newInstance()
-                    .add("ou", "users")
+                    .add("ou", userOu)
                     .add("uid", user.getUsername())  // Use uid for login
                     .build();
 

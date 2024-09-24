@@ -1,5 +1,6 @@
 package com.example.apiGateway.util;
 
+import com.example.apiGateway.model.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -8,10 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,12 +72,25 @@ public class JWTUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username, String fullname, String email) {
+    // Modify this method to accept both User and Authorities (roles)
+    public String generateToken(User user, Collection<? extends GrantedAuthority> authorities) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("fullname", fullname);  // Add full name claim
-        claims.put("email", email);  // Add email claim
-        return createToken(claims, username);
+
+        // Add user information to the claims
+        claims.put("fullname", user.getFullName());
+        claims.put("email", user.getEmail());
+
+        // Extract roles from authorities and add them as claims
+        List<String> roles = authorities.stream()
+                .map(GrantedAuthority::getAuthority)  // Extract the role name
+                .collect(Collectors.toList());
+
+        claims.put("roles", roles);  // Add the list of roles to the claims
+
+        // Return the generated token with the claims
+        return createToken(claims, user.getUsername());
     }
+
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
@@ -119,13 +130,11 @@ public class JWTUtil {
         }
     }
 
-    public List<GrantedAuthority> getAuthorities(String token) {
+    public List<String> extractRoles(String token) {
         Claims claims = extractAllClaims(token);
-        List<String> roles = claims.get("roles", List.class);
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))  // Prefix role with "ROLE_" as Spring expects
-                .collect(Collectors.toList());
+        return (List<String>) claims.get("roles");  // Assuming roles are stored in the "roles" claim
     }
+
 
 
 }

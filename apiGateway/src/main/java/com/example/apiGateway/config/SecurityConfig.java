@@ -46,6 +46,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/auth/signup", "/api/auth/login").permitAll() // Expose login and signup endpoints
+                        .pathMatchers(HttpMethod.PUT,"/api/inventory/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE,"/api/inventory/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST,"/api/inventory/**").hasRole("ADMIN")
                         .anyExchange().authenticated()  // Protect all other endpoints
                 )
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
@@ -75,6 +78,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(BaseLdapPathContextSource contextSource) {
         LdapBindAuthenticationManagerFactory factory = new LdapBindAuthenticationManagerFactory(contextSource);
         factory.setUserDnPatterns("uid={0},ou=users");
+        factory.setUserDnPatterns("uid={0},ou=admins");
         return factory.createAuthenticationManager();
     }
 
@@ -87,7 +91,7 @@ public class SecurityConfig {
     @Bean
     public BindAuthenticator bindAuthenticator(DefaultSpringSecurityContextSource contextSource) {
         BindAuthenticator authenticator = new BindAuthenticator(contextSource);
-        authenticator.setUserDnPatterns(new String[]{"uid={0},ou=users"});
+        authenticator.setUserDnPatterns(new String[]{"uid={0},ou=users","uid={0},ou=admins"});
         return authenticator;
     }
 

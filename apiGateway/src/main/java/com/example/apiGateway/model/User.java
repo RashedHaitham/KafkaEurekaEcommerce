@@ -28,6 +28,8 @@ public class User {
     @Attribute(name = "mail")
     private String email;
 
+    private String role;
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Attribute(name = "userPassword")
     private String password;

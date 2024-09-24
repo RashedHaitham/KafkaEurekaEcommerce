@@ -4,6 +4,7 @@ import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,9 +14,12 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class JWTFilter implements WebFilter {
@@ -39,20 +43,28 @@ public class JWTFilter implements WebFilter {
                 .map(HttpCookie::getValue)
                 .flatMap(token -> {
                     String username = jwtUtil.extractUsername(token);
+
                     if (jwtUtil.validateToken(token, username)) {
+
+                        List<String> roles = jwtUtil.extractRoles(token);
+                        List<GrantedAuthority> authorities = roles.stream()
+                                .map(SimpleGrantedAuthority::new)  // Convert each role to a GrantedAuthority
+                                .collect(Collectors.toList());
+
+                        System.out.println(authorities);
                         UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+                                new UsernamePasswordAuthenticationToken(username, null, authorities);
 
                         SecurityContext securityContext = new SecurityContextImpl(auth);
-                        System.out.println(securityContext.getAuthentication());
-                        System.out.println(securityContext.getAuthentication().getCredentials());
+
                         return chain.filter(exchange)
                                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
                     }
 
                     return chain.filter(exchange);
                 })
-                .switchIfEmpty(chain.filter(exchange));
+                .switchIfEmpty(chain.filter(exchange));  // If no JWT, proceed with the request
+
     }
 
     private Optional<HttpCookie> getJwtTokenFromRequest(ServerHttpRequest request) {

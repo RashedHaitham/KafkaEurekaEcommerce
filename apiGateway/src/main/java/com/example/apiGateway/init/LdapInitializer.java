@@ -16,5 +16,6 @@ public class LdapInitializer {
     @PostConstruct
     public void initializeLdapEntries() {
         organizationUnitService.createOrganizationalUnitIfNotExists("users");
+        organizationUnitService.createOrganizationalUnitIfNotExists("admins");
     }
 }

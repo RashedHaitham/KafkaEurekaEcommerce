@@ -2,6 +2,7 @@ package com.example.InventoryService.service;
 
 import com.example.InventoryService.entity.Inventory;
 import com.example.InventoryService.repository.InventoryRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,4 +53,51 @@ public class InventoryService {
     public Inventory getInventory(String productId) {
         return inventoryRepository.findByProductId(productId);
     }
+
+    public boolean deleteInventory(String id) {
+        Inventory inventory = inventoryRepository.findByProductId(id);
+
+        if (inventory != null) {
+            try {
+                inventoryRepository.delete(inventory);
+                logger.info("Deleted inventory for product: " + id);
+                return true;
+            } catch (Exception e) {
+                logger.severe("Failed to delete inventory for product: " + id + ". Error: " + e.getMessage());
+                return false;
+            }
+        } else {
+            logger.warning("Product with ID " + id + " not found in inventory.");
+            return false;
+        }
+    }
+
+    public boolean updateInventory(Inventory updatedInventory) {
+        String productId=updatedInventory.getProductId();
+        // Check if the product exists
+        Inventory existingInventory = inventoryRepository.findByProductId(productId);
+
+        if (existingInventory != null) {
+            // Update fields that need to be updated
+            existingInventory.setAvailableStock(updatedInventory.getAvailableStock());
+
+            // Optionally, update other fields if there are any
+            // e.g., existingInventory.setProductName(updatedInventory.getProductName());
+
+            try {
+                // Save the updated inventory
+                inventoryRepository.save(existingInventory);
+                logger.info("Updated inventory for product: " + productId);
+                return true;
+            } catch (Exception e) {
+                logger.severe("Failed to update inventory for product: " + productId + ". Error: " + e.getMessage());
+                return false;
+            }
+        } else {
+            // Product does not exist
+            logger.warning("Product with ID " + productId + " not found for update.");
+            return false;
+        }
+    }
+
 }
