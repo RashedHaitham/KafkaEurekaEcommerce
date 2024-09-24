@@ -24,7 +24,6 @@ public class InventoryController {
         this.inventoryService = inventoryService;
     }
 
-    // Update existing inventory item
     @PutMapping("/{id}")
     public ResponseEntity<String> updateInventory(@PathVariable String id, @Valid @RequestBody Inventory inventory) {
         inventory.setProductId(id); // Ensure the ID in the path is the same as in the request body
@@ -36,7 +35,6 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inventory not found");
     }
 
-    // Add new inventory item
     @PostMapping
     public ResponseEntity<String> addInventory(@Valid @RequestBody Inventory inventory) {
         boolean created = inventoryService.addStock(inventory);
@@ -47,14 +45,12 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Inventory already exists");
     }
 
-    // Retrieve all inventory items
     @GetMapping
     public ResponseEntity<List<Inventory>> getAllInventory() {
         List<Inventory> inventories = inventoryService.getAllInventory();
         return ResponseEntity.ok(inventories);
     }
 
-    // Retrieve a specific product by ID
     @GetMapping("/{id}")
     public ResponseEntity<Inventory> getInventory(@PathVariable String id) {
         Inventory product = inventoryService.getInventory(id);
@@ -65,7 +61,6 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    // Delete an inventory item
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteInventory(@PathVariable String id) {
         boolean deleted = inventoryService.deleteInventory(id);
