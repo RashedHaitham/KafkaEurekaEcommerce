@@ -11,6 +11,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="common-entities" />
+        <module name="SecurityService" />
         <module name="InventoryService" />
         <module name="apiGateway" />
         <module name="NotificationService" />
@@ -29,6 +30,7 @@
       <module name="NotificationService" options="-parameters" />
       <module name="OrderService" options="-parameters" />
       <module name="PaymentService" options="-parameters" />
+      <module name="SecurityService" options="-parameters" />
       <module name="apiGateway" options="-parameters" />
       <module name="eurekaServer" options="-parameters" />
     </option>

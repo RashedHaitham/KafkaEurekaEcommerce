@@ -19,13 +19,8 @@ public class InventoryConsumer {
     @KafkaListener(topics = "inventory-updates", groupId = "inventoryService")
     public void consumeInventoryUpdate(Inventory inventory) {
         logger.info("Received inventory update: " + inventory);
-        boolean stockUpdated = inventoryService.reduceStock(inventory.getProductId(), inventory.getAvailableStock());
+        logger.info("Stock updated successfully for product: " + inventory.getProductId());
 
-        if (stockUpdated) {
-            logger.info("Stock updated successfully for product: " + inventory.getProductId());
-        } else {
-            logger.warning("Stock update failed for product: " + inventory.getProductId());
-        }
     }
 
     @KafkaListener(topics = "inventory-add", groupId = "inventoryService")

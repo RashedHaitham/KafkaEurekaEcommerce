@@ -1,4 +1,4 @@
-package com.example.apiGateway.service;
+package com.example.SecurityService.service;
 
 import org.springframework.ldap.NameNotFoundException;
 import org.springframework.ldap.core.DirContextAdapter;
@@ -7,11 +7,13 @@ import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.naming.Name;
+import java.util.logging.Logger;
 
 @Service
 public class OrganizationUnitService {
 
     private final LdapTemplate ldapTemplate;
+    Logger logger = Logger.getLogger(OrganizationUnitService.class.getName());
 
     public OrganizationUnitService(LdapTemplate ldapTemplate) {
         this.ldapTemplate = ldapTemplate;
@@ -25,17 +27,15 @@ public class OrganizationUnitService {
         try {
             // Check if the organizational unit already exists
             ldapTemplate.lookup(dn);  // If found, it exists
-            return;  // OU already exists, do nothing
         } catch (NameNotFoundException e) {
-            // Organizational unit doesn't exist, proceed to create it
+            logger.info("Organizational unit with name " + ouName + " does not exists, creating it....");
+            DirContextAdapter context = new DirContextAdapter(dn);
+            context.setAttributeValues("objectClass", new String[] {"top", "organizationalUnit"});
+            context.setAttributeValue("ou", ouName);
+
+            ldapTemplate.bind(context);
         }
 
-        // Attributes for the organizational unit
-        DirContextAdapter context = new DirContextAdapter(dn);
-        context.setAttributeValues("objectClass", new String[] {"top", "organizationalUnit"});
-        context.setAttributeValue("ou", ouName);
 
-        // Bind the new entry
-        ldapTemplate.bind(context);
     }
 }

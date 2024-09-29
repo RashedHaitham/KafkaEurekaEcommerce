@@ -24,9 +24,8 @@ public class InventoryController {
         this.inventoryService = inventoryService;
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<String> updateInventory(@PathVariable String id, @Valid @RequestBody Inventory inventory) {
-        inventory.setProductId(id); // Ensure the ID in the path is the same as in the request body
+    @PutMapping
+    public ResponseEntity<String> updateInventory(@Valid @RequestBody Inventory inventory) {
         boolean updated = inventoryService.updateInventory(inventory);
         if (updated) {
             inventoryProducer.sendInventoryUpdate(inventory);

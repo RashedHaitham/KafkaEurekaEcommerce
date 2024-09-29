@@ -1,19 +1,19 @@
-package com.example.apiGateway.model;
+package com.example.SecurityService.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.ldap.odm.annotations.Attribute;
 import org.springframework.ldap.odm.annotations.Entry;
 import org.springframework.ldap.odm.annotations.Id;
-import org.springframework.ldap.odm.annotations.Attribute;
 
 import javax.naming.Name;
 @Entry(base = "ou=users", objectClasses = { "inetOrgPerson", "top" })
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class User {
 
     @Id

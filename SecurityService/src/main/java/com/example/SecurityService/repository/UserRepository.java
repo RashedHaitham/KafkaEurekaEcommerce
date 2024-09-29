@@ -1,6 +1,6 @@
-package com.example.apiGateway.repository;
+package com.example.SecurityService.repository;
 
-import com.example.apiGateway.model.User;
+import com.example.SecurityService.model.User;
 import org.springframework.data.ldap.repository.LdapRepository;
 import org.springframework.stereotype.Repository;
 

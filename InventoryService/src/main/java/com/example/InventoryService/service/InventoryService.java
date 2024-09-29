@@ -78,11 +78,9 @@ public class InventoryService {
         Inventory existingInventory = inventoryRepository.findByProductId(productId);
 
         if (existingInventory != null) {
+
             // Update fields that need to be updated
             existingInventory.setAvailableStock(updatedInventory.getAvailableStock());
-
-            // Optionally, update other fields if there are any
-            // e.g., existingInventory.setProductName(updatedInventory.getProductName());
 
             try {
                 // Save the updated inventory

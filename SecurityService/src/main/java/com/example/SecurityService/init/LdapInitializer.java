@@ -1,6 +1,6 @@
-package com.example.apiGateway.init;
+package com.example.SecurityService.init;
 
-import com.example.apiGateway.service.OrganizationUnitService;
+import com.example.SecurityService.service.OrganizationUnitService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 

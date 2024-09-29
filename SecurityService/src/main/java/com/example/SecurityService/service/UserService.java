@@ -1,7 +1,7 @@
-package com.example.apiGateway.service;
+package com.example.SecurityService.service;
 
-import com.example.apiGateway.model.User;
-import com.example.apiGateway.repository.UserRepository;
+import com.example.SecurityService.model.User;
+import com.example.SecurityService.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.NameNotFoundException;
 import org.springframework.ldap.core.DirContextAdapter;
@@ -14,6 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.naming.Name;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -52,8 +53,19 @@ public class UserService {
 
 
     public Flux<User> findAll() {
-        return (Flux<User>) userRepository.findAll();
+        List<User> users = userRepository.findAll();  // Assuming the repository returns a List
+
+        users.forEach(user -> {
+            if (user.getId() != null && user.getId().toString().contains("ou=admins")) {
+                user.setRole("admin");
+            } else {
+                user.setRole("user");
+            }
+        });
+
+        return Flux.fromIterable(users);
     }
+
 
 
     public Mono<User> savePerson(User user) {
@@ -63,30 +75,26 @@ public class UserService {
         return Mono.fromCallable(() -> {
             Name dn = LdapNameBuilder.newInstance()
                     .add("ou", userOu)
-                    .add("uid", user.getUsername())  // Use uid for login
+                    .add("uid", user.getUsername())
                     .build();
 
             try {
                 ldapTemplate.lookup(dn);  // If found, do nothing, entry already exists
                 throw new IllegalStateException("Entry already exists: " + dn.toString());
             } catch (NameNotFoundException e) {
-                // Entry does not exist, proceed with saving it
+                DirContextAdapter context = new DirContextAdapter(dn);
+                context.setAttributeValues("objectClass", new String[]{"inetOrgPerson", "top"});
+                context.setAttributeValue("uid", user.getUsername());
+                context.setAttributeValue("cn", user.getFullName());
+                context.setAttributeValue("sn", user.getLastName());
+                context.setAttributeValue("mail", user.getEmail());
+
+                context.setAttributeValue("userPassword", user.getPassword());
+
+                ldapTemplate.bind(context);
+
+                return user;
             }
-
-            DirContextAdapter context = new DirContextAdapter(dn);
-            context.setAttributeValues("objectClass", new String[] {"inetOrgPerson", "top"});
-            context.setAttributeValue("uid", user.getUsername());
-            context.setAttributeValue("cn", user.getFullName());
-            context.setAttributeValue("sn", user.getLastName());
-            context.setAttributeValue("mail", user.getEmail());
-
-            context.setAttributeValue("userPassword", user.getPassword());
-
-            // Bind the new entry to the LDAP directory
-            ldapTemplate.bind(context);
-
-            // Return the saved user for further processing in a reactive chain
-            return user;
         });
     }
 
