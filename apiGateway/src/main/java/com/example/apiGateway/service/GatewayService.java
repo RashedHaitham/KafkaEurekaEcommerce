@@ -4,15 +4,19 @@ import com.example.apiGateway.exception.UserNotFoundException;
 import com.example.apiGateway.model.AuthRequest;
 import com.example.apiGateway.model.AuthResponse;
 import com.example.apiGateway.model.User;
+import com.example.apiGateway.util.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.springframework.http.ResponseCookie;
+
+import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -20,6 +24,9 @@ public class GatewayService {
 
     @Autowired
     private WebClient.Builder webClientBuilder;
+
+    @Autowired
+    private JWTUtil jwtUtil;
 
     public Mono<ResponseEntity<AuthResponse>> login(AuthRequest authRequest) {
         String securityServiceUrl = "http://localhost:8088/security/authenticate";
@@ -129,5 +136,28 @@ public class GatewayService {
                 .map(responseBody -> ResponseEntity.ok("User deleted successfully: " + username))  // Handle success
                 .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage())));  // Handle errors
 
+    }
+
+    public Mono<ResponseEntity<String>> userProfile(String username, ServerWebExchange exchange) {
+        Optional<HttpCookie> jwtCookieOpt = getJwtTokenFromRequest(exchange.getRequest());
+
+        if (jwtCookieOpt.isPresent()) {
+            String token = jwtCookieOpt.get().getValue();
+            if (jwtUtil.validateToken(token, username)) {
+                List<String> roles = jwtUtil.extractRoles(token);
+                String extractedUsername = jwtUtil.extractUsername(token);
+
+                String responseData = "User profile data for user with username: " + extractedUsername +
+                        ", Roles: " + roles;
+
+                return Mono.just(ResponseEntity.ok(responseData));
+            }
+        }
+
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to retrieve user profile data"));
+    }
+
+    private Optional<HttpCookie> getJwtTokenFromRequest(ServerHttpRequest request) {
+        return Optional.ofNullable(request.getCookies().getFirst("jwtToken"));
     }
 }

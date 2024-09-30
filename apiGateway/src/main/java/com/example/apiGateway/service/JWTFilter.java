@@ -2,6 +2,7 @@ package com.example.apiGateway.service;
 
 import com.example.apiGateway.util.JWTUtil;
 import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,12 +29,13 @@ public class JWTFilter implements WebFilter {
     public JWTFilter(JWTUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         Optional<HttpCookie> jwtCookieOpt = getJwtTokenFromRequest(exchange.getRequest());
 
         String path = exchange.getRequest().getPath().toString();
+
+        // Allow login and signup without authentication
         if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
             return chain.filter(exchange);
         }
@@ -44,6 +46,16 @@ public class JWTFilter implements WebFilter {
                     String username = jwtUtil.extractUsername(token);
                     if (jwtUtil.validateToken(token, username)) {
 
+                        // Extract the username from the path if the path matches the user profile pattern
+                        if (path.matches("/profile/user/\\w+")) {
+                            String pathUsername = path.split("/")[3]; // Extract username from path
+                            if (!username.equals(pathUsername)) {
+                                // If the username in the JWT does not match the one in the path, return 403 Forbidden
+                                exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                                return exchange.getResponse().setComplete();
+                            }
+                        }
+
                         List<String> roles = jwtUtil.extractRoles(token);
                         List<GrantedAuthority> authorities = roles.stream()
                                 .map(SimpleGrantedAuthority::new)  // Convert each role to a GrantedAuthority
@@ -51,8 +63,6 @@ public class JWTFilter implements WebFilter {
 
                         Authentication auth =
                                 new UsernamePasswordAuthenticationToken(username, null, authorities);
-
-                        System.out.println("auth "+auth);
 
                         SecurityContext securityContext = new SecurityContextImpl(auth);
 
@@ -63,8 +73,8 @@ public class JWTFilter implements WebFilter {
                     return chain.filter(exchange);
                 })
                 .switchIfEmpty(chain.filter(exchange));  // If no JWT, proceed with the request
-
     }
+
 
     private Optional<HttpCookie> getJwtTokenFromRequest(ServerHttpRequest request) {
         return Optional.ofNullable(request.getCookies().getFirst("jwtToken"));

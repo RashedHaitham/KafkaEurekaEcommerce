@@ -10,7 +10,9 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -73,6 +75,12 @@ public class APIController {
     @DeleteMapping("/users/{username}")
     public Mono<ResponseEntity<String>> deleteUser(@PathVariable String username) {
         return gatewayService.deleteUser(username);
-        }
+    }
+
+    @GetMapping("/profile/{username}")
+    public Mono<ResponseEntity<String>> getUserProfile(@PathVariable String username, ServerWebExchange exchange) {
+        return gatewayService.userProfile(username, exchange);
+
+    }
 
 }
